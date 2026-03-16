@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ROBIUL ISLAM | Web Developer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* CSS Variables for Green & Grey Theme */
+        :root {
+            --bg-dark: #121212;
+            --bg-card: #1e1e24;
+            --primary-green: #00e676; /* Vibrant Green */
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --border-color: #333333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+        }
+
+        /* Navbar */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            padding: 20px 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(18, 18, 18, 0.9);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--text-main);
+            text-decoration: none;
+            letter-spacing: 2px;
+        }
+
+        .logo span {
+            color: var(--primary-green);
+        }
+
+        .nav-links {
+            list-style: none;
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-links a {
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 15px;
+            font-weight: 400;
+            transition: 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-green);
+        }
+
+        .menu-toggle {
+            display: none;
+            font-size: 24px;
+            color: var(--primary-green);
+            cursor: pointer;
+        }
+
+        /* Hero Section */
+        .hero {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 20px;
+            background: radial-gradient(circle at center, #1a1a24 0%, var(--bg-dark) 100%);
+        }
+
+        .hero-content h3 {
+            color: var(--primary-green);
+            font-size: 20px;
+            font-weight: 400;
+            letter-spacing: 2px;
+            margin-bottom: 10px;
+        }
+
+        .hero-content h1 {
+            font-size: 50px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+
+        .hero-content p {
+            color: var(--text-muted);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto 30px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: var(--primary-green);
+            color: var(--bg-dark);
+            text-decoration: none;
+            font-weight: 600;
+            border-radius: 5px;
+            transition: 0.3s;
+            border: 2px solid var(--primary-green);
+        }
+
+        .btn:hover {
+            background: transparent;
+            color: var(--primary-green);
+        }
+
+        /* Sections General */
+        section {
+            padding: 80px 5%;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 50px;
+            color: var(--text-main);
+        }
+
+        .section-title span {
+            color: var(--primary-green);
+        }
+
+        /* About Section */
+        .about-content {
+            background: var(--bg-card);
+            padding: 40px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .about-content p {
+            color: var(--text-muted);
+            line-height: 1.8;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .skills {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .skill-tag {
+            background: rgba(0, 230, 118, 0.1);
+            color: var(--primary-green);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            border: 1px solid var(--primary-green);
+        }
+
+        /* Projects Section */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .project-card {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 25px;
+            border: 1px solid var(--border-color);
+            transition: 0.3s;
+        }
+
+        .project-card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary-green);
+            box-shadow: 0 10px 30px rgba(0, 230, 118, 0.1);
+        }
+
+        .project-icon {
+            font-size: 40px;
+            color: var(--primary-green);
+            margin-bottom: 20px;
+        }
+
+        .project-title {
+            font-size: 22px;
+            margin-bottom: 10px;
+        }
+
+        .project-desc {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .project-link {
+            color: var(--primary-green);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .project-link:hover {
+            text-decoration: underline;
+        }
+
+        /* Contact Section */
+        .contact-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+        }
+
+        .contact-box {
+            background: var(--bg-card);
+            padding: 30px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            flex: 1;
+            min-width: 250px;
+            max-width: 350px;
+        }
+
+        .contact-box i {
+            font-size: 30px;
+            color: var(--primary-green);
+            margin-bottom: 15px;
+        }
+
+        .contact-box h4 {
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .contact-box p {
+            color: var(--text-muted);
+            font-size: 15px;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 30px;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .nav-links {
+                position: absolute;
+                top: 70px;
+                right: -100%;
+                flex-direction: column;
+                background: var(--bg-card);
+                width: 100%;
+                text-align: center;
+                padding: 20px 0;
+                border-bottom: 1px solid var(--border-color);
+                transition: 0.3s;
+            }
+            .nav-links.active {
+                right: 0;
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .hero-content h1 {
+                font-size: 36px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <a href="#" class="logo">SK<span>_RI</span></a>
+        <div class="menu-toggle" onclick="toggleMenu()"><i class="fas fa-bars"></i></div>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="#home" onclick="toggleMenu()">Home</a></li>
+            <li><a href="#about" onclick="toggleMenu()">About</a></li>
+            <li><a href="#projects" onclick="toggleMenu()">Projects</a></li>
+            <li><a href="#contact" onclick="toggleMenu()">Contact</a></li>
+        </ul>
+    </header>
+
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h3>Hello, I'm</h3>
+            <h1>ROBIUL ISLAM</h1>
+            <p>A passionate Web Developer and Software Engineering enthusiast specializing in building fast, modern, and high-converting websites for businesses.</p>
+            <a href="#projects" class="btn">View My Work</a>
+        </div>
+    </section>
+
+    <section id="about">
+        <h2 class="section-title">About <span>Me</span></h2>
+        <div class="about-content">
+            <p>Hi there! I'm a developer based in Malda, West Bengal. I enjoy solving complex problems and turning ideas into beautiful, functional digital products.</p>
+            <p>Currently, I am focusing on building seamless E-commerce platforms and helping local businesses scale their presence online with smart web solutions.</p>
+            
+            <div class="skills">
+                <span class="skill-tag">HTML5 & CSS3</span>
+                <span class="skill-tag">JavaScript</span>
+                <span class="skill-tag">Frontend Development</span>
+                <span class="skill-tag">UI/UX Design</span>
+                <span class="skill-tag">Problem Solving</span>
+            </div>
+        </div>
+    </section>
+
+    <section id="projects">
+        <h2 class="section-title">Recent <span>Projects</span></h2>
+        <div class="projects-grid">
+            
+            <div class="project-card">
+                <i class="fas fa-shopping-cart project-icon"></i>
+                <h3 class="project-title">E-commerce Platform</h3>
+                <p class="project-desc">A fully responsive modest fashion e-commerce store with an integrated WhatsApp checkout system, custom user profiles, and a dynamic shopping cart.</p>
+                <a href="#" class="project-link">View Project &rarr;</a>
+            </div>
+
+            <div class="project-card">
+                <i class="fas fa-laptop-code project-icon"></i>
+                <h3 class="project-title">Business Portfolio</h3>
+                <p class="project-desc">A sleek and modern landing page designed for agencies and freelancers to showcase their services and attract high-paying clients.</p>
+                <a href="#" class="project-link">Coming Soon &rarr;</a>
+            </div>
+
+            <div class="project-card">
+                <i class="fas fa-mobile-alt project-icon"></i>
+                <h3 class="project-title">Web App UI</h3>
+                <p class="project-desc">A mobile-first user interface design focused on seamless navigation and providing the best user experience for mobile shoppers.</p>
+                <a href="#" class="project-link">Coming Soon &rarr;</a>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="contact">
+        <h2 class="section-title">Get In <span>Touch</span></h2>
+        <div class="contact-container">
+            
+            <div class="contact-box">
+                <i class="fas fa-envelope"></i>
+                <h4>Email Me</h4>
+                <p>robiulislam2867@gmail.com</p>
+            </div>
+
+            <div class="contact-box">
+                <i class="fas fa-wallet"></i>
+                <h4>UPI ID</h4>
+                <p>skri250@ybl</p>
+            </div>
+
+            <div class="contact-box">
+                <i class="fas fa-map-marker-alt"></i>
+                <h4>Location</h4>
+                <p>Malda, West Bengal, India</p>
+            </div>
+
+        </div>
+    </section>
+
+    <footer>
+        <p>&copy; 2026 Robiul Islam (SK_RI). All rights reserved.</p>
+    </footer>
+
+    <script>
+        function toggleMenu() {
+            const navLinks = document.getElementById("navLinks");
+            navLinks.classList.toggle("active");
+        }
+    </script>
+</body>
+</html>
