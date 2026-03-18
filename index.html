@@ -116,6 +116,7 @@
             <div class="nav-item" onclick="switchTab('products-view', this)"><i class="fas fa-tshirt"></i> Inventory & Stock</div>
             <div class="nav-item" onclick="switchTab('add-product-view', this)"><i class="fas fa-plus-circle"></i> Add Product</div>
             <div class="nav-item" onclick="switchTab('orders-view', this)"><i class="fas fa-shopping-bag"></i> Orders & Earnings</div>
+            <div class="nav-item" onclick="switchTab('customers-view', this)"><i class="fas fa-users"></i> Customers List</div>
             <div class="nav-item" onclick="switchTab('settings-view', this)"><i class="fas fa-user-cog"></i> Profile & Settings</div>
             <div class="nav-item" onclick="handleLogout()" style="color: #f64e60; margin-top: 20px;"><i class="fas fa-sign-out-alt"></i> Logout</div>
         </div>
@@ -127,7 +128,7 @@
                 <i class="fas fa-bars mobile-toggle" onclick="toggleSidebar()"></i>
                 <div class="header-title" id="header-title">Overview</div>
             </div>
-            <div class="user-profile" onclick="switchTab('settings-view', document.querySelectorAll('.nav-item')[4])">
+            <div class="user-profile" onclick="switchTab('settings-view', document.querySelectorAll('.nav-item')[5])">
                 <span id="display-admin-name">Admin</span>
                 <div class="avatar">
                     <span id="avatar-initial">A</span>
@@ -217,8 +218,24 @@
                 <div style="overflow-x: auto;">
                     <table>
                         <thead><tr><th>Date</th><th>Order ID</th><th>Customer</th><th>Items</th><th>Amount</th><th>Status Update</th></tr></thead>
-                        <tbody id="orders-table-body">
-                            </tbody>
+                        <tbody id="orders-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="customers-view" class="view-section">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Registered Customers Database</h3>
+                    <button class="btn-primary" onclick="fetchUsers()"><i class="fas fa-sync-alt"></i> Refresh Data</button>
+                </div>
+                <div style="overflow-x: auto;">
+                    <table>
+                        <thead><tr><th>Customer ID</th><th>Full Name</th><th>Phone Number</th></tr></thead>
+                        <tbody id="users-table-body">
+                            <tr><td colspan="3" style="text-align: center; padding: 30px;">Loading users...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -265,8 +282,8 @@
     </div>
     <script>
         const API_URL = "https://69ba5f18b3dcf7e0b4bcb73f.mockapi.io/products";
+        const USERS_API_URL = "https://69ba5f18b3dcf7e0b4bcb73f.mockapi.io/users"; // New Endpoint!
         
-        // --- AUTHENTICATION & PROFILE LOGIC ---
         let currentAdmin = localStorage.getItem('rsAdminUser');
 
         window.onload = () => {
@@ -275,10 +292,41 @@
                 document.getElementById('main-app').style.display = 'flex';
                 loadProfileData();
                 fetchProducts();
+                fetchUsers(); // Fetch users on load!
                 renderOrders();
             }
         };
 
+        // --- NEW: FETCH USERS LOGIC ---
+        async function fetchUsers() {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Fetching customers...</td></tr>';
+            try {
+                const response = await fetch(USERS_API_URL);
+                const users = await response.json();
+                
+                tbody.innerHTML = '';
+                if(users.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">No registered customers yet.</td></tr>';
+                    return;
+                }
+
+                // Reverse the array so the newest users appear at the top
+                users.reverse().forEach(u => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-weight:bold; color:var(--primary);">${u.userId || 'N/A'}</td>
+                            <td>${u.name}</td>
+                            <td>${u.phone}</td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color:red;">Failed to load customers from database.</td></tr>';
+            }
+        }
+
+        // --- AUTHENTICATION & PROFILE LOGIC ---
         function toggleAuth() {
             const loginBox = document.getElementById('login-box');
             const signupBox = document.getElementById('signup-box');
@@ -374,7 +422,6 @@
             }
         }
 
-        // --- UI NAVIGATION LOGIC ---
         function switchTab(tabId, element) {
             document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -398,27 +445,22 @@
             }
         }
 
-        // --- INVENTORY, DELETE & MOCKAPI LOGIC ---
+        // --- INVENTORY & DELETE LOGIC ---
         async function fetchProducts() {
             const tableBody = document.getElementById('product-table-body');
             tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Fetching live data...</td></tr>';
-            
             try {
                 const response = await fetch(API_URL);
                 const data = await response.json();
-                
                 document.getElementById('dash-product-count').innerText = data.length; 
                 tableBody.innerHTML = ''; 
-                
                 if (data.length === 0) {
                     tableBody.innerHTML = '<tr><td colspan="6" style="text-align: center;">Database is empty.</td></tr>'; return;
                 }
-
                 data.forEach(p => {
                     const stock = p.stock || 0;
                     const status = p.status || (stock > 0 ? 'Active' : 'Out of Stock');
                     const badgeClass = status === 'Active' ? 'badge-success' : 'badge-danger';
-
                     tableBody.innerHTML += `
                         <tr>
                             <td>
@@ -449,9 +491,7 @@
                 await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
                 alert("Product deleted successfully!");
                 fetchProducts(); 
-            } catch (error) {
-                alert("Failed to delete product. Please try again.");
-            }
+            } catch (error) { alert("Failed to delete product. Please try again."); }
         }
 
         function openEditModal(id, currentStock, currentStatus) {
@@ -531,7 +571,7 @@
             };
         });
 
-        // --- ORDER MANAGEMENT (Demo Data that calculates Earnings) ---
+        // --- ORDER MANAGEMENT (Demo Data) ---
         let orders = [
             { id: "ORD-001", date: "18 Mar 2026", customer: "Riya Khan", items: "Premium Abaya", amount: 1499, status: "Pending" },
             { id: "ORD-002", date: "17 Mar 2026", customer: "Ayesha S.", items: "Chiffon Hijab (x2)", amount: 800, status: "Shipped" },
