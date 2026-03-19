@@ -14,12 +14,25 @@
         body.dark-mode input, body.dark-mode textarea { background-color: #333; color: white; border-color: #444; }
         body.dark-mode h1, body.dark-mode h2, body.dark-mode h3, body.dark-mode p { color: #f1f1f1 !important; }
         
-        /* NEW BEAUTIFUL PAYMENT CARDS CSS */
         .payment-card { display: flex; align-items: center; justify-content: space-between; padding: 15px; border: 2px solid var(--border-color, #ddd); border-radius: 12px; margin-bottom: 12px; cursor: pointer; transition: 0.3s; background: var(--card-bg, #fff); }
         .payment-card input[type="radio"] { display: none; }
         .payment-card.selected { border-color: #c5a880; background: rgba(197, 168, 128, 0.08); box-shadow: 0 4px 12px rgba(197, 168, 128, 0.15); }
         body.dark-mode .payment-card { background: #1b1b29; border-color: #2b2b40; }
         body.dark-mode .payment-card.selected { border-color: #c5a880; background: rgba(197, 168, 128, 0.15); }
+
+        /* PREMIUM CHAT UI */
+        .chat-container { display: flex; flex-direction: column; height: 65vh; min-height: 400px; background: var(--card-bg, #fff); border-radius: 16px; box-shadow: 0 10px 40px rgba(0,0,0,0.08); overflow: hidden; border: 1px solid var(--border-color, #eee); margin-top: 20px; }
+        .chat-header-premium { background: #1e1e2d; color: white; padding: 20px; display: flex; align-items: center; gap: 15px; }
+        .chat-header-premium h3 { font-family: 'Playfair Display', serif; margin: 0; font-size: 20px; }
+        .chat-messages-area { flex: 1; padding: 20px; overflow-y: auto; background: var(--bg-color, #fdfdfd); display: flex; flex-direction: column; gap: 15px; }
+        .chat-bubble { max-width: 75%; padding: 12px 18px; font-size: 14px; line-height: 1.5; word-wrap: break-word; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .chat-user { align-self: flex-end; background: #c5a880; color: #fff; border-radius: 18px 18px 0 18px; }
+        .chat-admin { align-self: flex-start; background: #ffffff; color: #333; border-radius: 18px 18px 18px 0; border: 1px solid #eaeaea; }
+        body.dark-mode .chat-admin { background: #2a2a35; color: #eee; border-color: #3a3a4a; }
+        body.dark-mode .chat-messages-area { background: #151521; }
+        .chat-input-box { display: flex; padding: 15px 20px; background: var(--card-bg, #fff); border-top: 1px solid var(--border-color, #eee); gap: 10px; align-items: center; }
+        .chat-input-box input { flex: 1; padding: 12px 20px; border-radius: 25px; border: 1px solid var(--border-color, #ddd); background: var(--input-bg, #f9f9f9); color: var(--text-main); font-size: 14px; }
+        .chat-send-btn { background: #1e1e2d; color: white; border: none; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.3s; }
     </style>
 </head>
 <body>
@@ -34,7 +47,7 @@
     </header>
 
     <div class="search-container" id="search-container"><input type="text" class="search-input" id="search-input" placeholder="Search for products..." onkeyup="filterProducts()"><div class="search-suggestions" id="search-suggestions"></div></div>
-
+    
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header"><h3 style="font-family: 'Playfair Display'">Menu</h3><i class="fas fa-times" style="font-size: 20px; cursor: pointer;" onclick="closeSidebar()"></i></div>
@@ -44,6 +57,8 @@
             <a href="#" onclick="navigate('home-view'); closeSidebar();"><i class="fas fa-tshirt"></i> Products</a>
             <a href="#" onclick="navigate('cart-view'); closeSidebar();"><i class="fas fa-shopping-cart"></i> Cart</a>
             <a href="#" onclick="handleUserClick(); closeSidebar();"><i class="fas fa-user"></i> My Profile</a>
+            <a href="#" onclick="navigate('chat-view'); closeSidebar();"><i class="fas fa-headset"></i> Live Support</a>
+            <a href="mailto:robiulislam786786u@gmail.com"><i class="fas fa-envelope"></i> Contact Us</a>
             <a href="#" onclick="navigate('about-view'); closeSidebar();"><i class="fas fa-info-circle"></i> About Developer</a>
         </div>
         <div style="padding: 20px; text-align: center; font-size: 14px;"><p id="sidebar-user-display">Not Logged In</p></div>
@@ -53,6 +68,7 @@
         <div class="slider-container"><div class="slider-wrapper" id="sliderWrapper"><div class="slide" style="background-image: url('slider1.jpg');"><div class="slide-content"><h1>Modest & Elegant</h1></div></div><div class="slide" style="background-image: url('slider2.jpg');"><div class="slide-content"><h1>Premium Quality</h1></div></div></div></div>
         <h2 class="section-title">Trending Now</h2><div class="products-grid" id="products-grid"></div>
     </div>
+
     <div id="product-view" class="view-section">
         <div class="product-detail-container">
             <div class="detail-img-box"><img id="pd-img" src="" alt="Product"></div>
@@ -61,14 +77,15 @@
                 <h1 class="detail-title" id="pd-title">Product Name</h1>
                 <p class="detail-price" id="pd-price">₹0</p>
                 <ul class="features" id="pd-features"></ul>
-                <div class="btn-group"><button class="btn-add" onclick="addToCartFromDetail()">Add to Cart</button><button class="btn-buy" onclick="openCheckoutModal('single')">Buy Now</button></div>
+                <div class="btn-group">
+                    <button class="btn-add" onclick="addToCartFromDetail()">Add to Cart</button>
+                    <button class="btn-buy" onclick="openCheckoutModal('single')">Buy Now</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="cart-view" class="view-section">
-        <div class="cart-container"><h2 class="section-title">Your Cart</h2><div id="cart-items-container"></div><div class="cart-total" id="cart-total">Total: ₹0</div><button class="order-all-btn" onclick="openCheckoutModal('cart')"><i class="fas fa-shopping-cart"></i> Checkout All Items</button></div>
-    </div>
+    <div id="cart-view" class="view-section"><div class="cart-container"><h2 class="section-title">Your Cart</h2><div id="cart-items-container"></div><div class="cart-total" id="cart-total">Total: ₹0</div><button class="order-all-btn" onclick="openCheckoutModal('cart')"><i class="fas fa-shopping-cart"></i> Checkout All Items</button></div></div>
 
     <div id="profile-view" class="view-section">
         <div class="about-container">
@@ -77,9 +94,32 @@
                 <div style="width: 80px; height: 80px; background: #c5a880; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 15px;"><i class="fas fa-user"></i></div>
                 <h3 id="prof-name">Name</h3><p style="margin-bottom: 15px;">User ID: <strong id="prof-id">...</strong></p>
                 <div class="contact-info" style="text-align: left;"><p><strong><i class="fas fa-phone"></i> Mobile:</strong> <span id="prof-phone">...</span></p></div>
-                <h3 style="margin-top: 25px; text-align: left; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">My Orders</h3>
+                <h3 style="margin-top: 25px; text-align: left; border-bottom: 1px solid var(--border-color, #eee); padding-bottom: 10px;">My Orders</h3>
                 <div id="order-history-list" style="text-align: left; margin-top: 15px;"></div>
                 <button onclick="logoutUser()" style="margin-top: 20px; padding: 12px; background: #d9534f; color: white; border: none; border-radius: 8px; width: 100%; font-weight: bold; font-size:16px;">Logout</button>
+            </div>
+        </div>
+    </div>
+    <div id="chat-view" class="view-section">
+        <div class="about-container">
+            <div class="chat-container">
+                <div class="chat-header-premium">
+                    <div style="width:45px; height:45px; background:#c5a880; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:22px;">🎧</div>
+                    <div><h3 style="margin:0;">Concierge Support</h3><p style="margin:0; font-size:12px; color:#c5a880;">We usually reply instantly</p></div>
+                </div>
+                <div class="chat-messages-area" id="user-chat-box">
+                    <div style="text-align:center; margin-top:40px;">
+                        <i class="fas fa-lock" style="font-size:40px; color:#ddd; margin-bottom:15px;"></i><br>
+                        <p style="color:#888;">Please login to access live support.</p>
+                        <button onclick="openLogin()" style="margin-top:15px; padding:10px 20px; background:#c5a880; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Login Now</button>
+                    </div>
+                </div>
+                <div class="chat-input-box" id="user-chat-input-wrapper" style="display:none;">
+                    <i class="fas fa-image" style="font-size:24px; color:#c5a880; cursor:pointer;" onclick="document.getElementById('user-chat-img').click()"></i>
+                    <input type="file" id="user-chat-img" accept="image/*" style="display:none;" onchange="sendUserChatImage(event)">
+                    <input type="text" id="user-chat-input" placeholder="Type your message here...">
+                    <button class="chat-send-btn" onclick="sendUserMessage()"><i class="fas fa-paper-plane"></i></button>
+                </div>
             </div>
         </div>
     </div>
@@ -92,19 +132,20 @@
                 <h3 style="margin-top: 15px;">Hi, my name is Robiul Islam</h3>
                 <p style="color:var(--text-gray); margin-top:10px;">I made this elegant website to help businesses grow their online presence smoothly.</p>
                 <div style="text-align: left; margin-top:20px; background:rgba(0,0,0,0.03); padding:15px; border-radius:8px;">
-                    <p><strong><i class="fas fa-envelope" style="color:#c5a880;"></i> Email:</strong> robiulislam2867@gmail.com</p>
+                    <p><strong><i class="fas fa-envelope" style="color:#c5a880;"></i> Email:</strong> robiulislam786786u@gmail.com</p>
                 </div>
             </div>
         </div>
     </div>
 
     <div id="login-modal" class="modal">
-        <div class="modal-content"><span class="close-modal" onclick="closeLogin()">&times;</span><h2 style="font-family: 'Playfair Display'; margin-bottom: 20px;">User Login</h2><input type="text" id="login-name" placeholder="Full Name" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 5px; background:var(--input-bg); color:var(--text-main);"><input type="tel" id="login-number" placeholder="Mobile Number" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 5px; background:var(--input-bg); color:var(--text-main);"><button onclick="processLogin()" style="width: 100%; padding: 12px; background: #1e1e2d; color: white; border: none; border-radius: 5px; font-weight: bold;">Login / Generate ID</button></div>
+        <div class="modal-content"><span class="close-modal" onclick="closeLogin()">&times;</span><h2 style="font-family: 'Playfair Display'; margin-bottom: 20px;">User Login</h2><input type="text" id="login-name" placeholder="Full Name" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 5px; background:var(--input-bg); color:var(--text-main);"><input type="tel" id="login-number" placeholder="Mobile Number" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid var(--border-color); border-radius: 5px; background:var(--input-bg); color:var(--text-main);"><button onclick="processLogin()" style="width: 100%; padding: 12px; background: #1e1e2d; color: white; border: none; border-radius: 5px; font-weight: bold; cursor:pointer;">Login / Generate ID</button></div>
     </div>
     <div id="checkout-modal" class="modal">
         <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
             <span class="close-modal" onclick="closeCheckout()">&times;</span>
             <h2 style="font-family: 'Playfair Display'; margin-bottom: 15px;">Complete Order</h2>
+            
             <form id="checkout-form">
                 <p style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">Shipping Details</p>
                 <input type="text" id="chk-add1" placeholder="Address Line 1 (House, Street)" required style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid var(--border-color); border-radius: 5px; background:var(--input-bg); color:var(--text-main);">
@@ -113,8 +154,9 @@
                 
                 <div style="margin-bottom: 15px; display: flex; gap: 10px;">
                     <input type="text" id="chk-coupon" placeholder="Enter Coupon Code" style="flex:1; padding: 12px; border: 1px solid var(--border-color); border-radius: 5px; background:var(--input-bg); color:var(--text-main);">
-                    <button type="button" onclick="applyCouponCode()" style="padding: 12px 20px; background: #c5a880; color: white; border: none; border-radius: 5px; font-weight: bold;">Apply</button>
+                    <button type="button" onclick="applyCouponCode()" style="padding: 12px 20px; background: #c5a880; color: white; border: none; border-radius: 5px; font-weight: bold; cursor:pointer;">Apply</button>
                 </div>
+                
                 <div id="checkout-summary" style="margin-bottom: 15px; font-size: 14px; font-weight: bold; text-align: right; background: rgba(0,0,0,0.02); padding:10px; border-radius:5px;">
                     Subtotal: ₹<span id="chk-subtotal">0</span><br>
                     <span id="chk-discount-row" style="color: #1bc5bd; display: none;">Coupon Discount: -₹<span id="chk-discount">0</span><br></span>
@@ -129,10 +171,7 @@
                         <input type="radio" name="payment_method" value="COD" checked>
                         <div style="display:flex; align-items:center;">
                             <div style="font-size: 28px; margin-right: 15px;">🧑‍✈️📦</div>
-                            <div>
-                                <h4 style="margin-bottom: 2px; font-size: 15px; color: var(--text-main);">Cash on Delivery</h4>
-                                <p style="font-size: 11px; color: #888;">Pay when order arrives</p>
-                            </div>
+                            <div><h4 style="margin-bottom: 2px; font-size: 15px; color: var(--text-main);">Cash on Delivery</h4><p style="font-size: 11px; color: #888;">Pay when order arrives</p></div>
                         </div>
                         <i id="cod-check" class="fas fa-check-circle" style="color:#c5a880; font-size:22px; transition:0.3s;"></i>
                     </label>
@@ -143,11 +182,7 @@
                             <div style="font-size: 28px; margin-right: 15px;">📲⚡</div>
                             <div>
                                 <h4 style="margin-bottom: 2px; font-size: 15px; color: var(--text-main);">Pay Online (UPI)</h4>
-                                <div style="display:flex; gap:4px; margin-top:4px;">
-                                    <span style="background:#f1f1f1; color:#333; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold;">GPay</span>
-                                    <span style="background:#f1f1f1; color:#333; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold;">PhonePe</span>
-                                    <span style="background:#f1f1f1; color:#333; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold;">Paytm</span>
-                                </div>
+                                <div style="display:flex; gap:4px; margin-top:4px;"><span style="background:#f1f1f1; color:#333; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold;">GPay</span><span style="background:#f1f1f1; color:#333; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold;">PhonePe</span><span style="background:#f1f1f1; color:#333; font-size:9px; padding:2px 5px; border-radius:4px; font-weight:bold;">Paytm</span></div>
                             </div>
                         </div>
                         <i id="upi-check" class="fas fa-check-circle" style="color:#ddd; font-size:22px; transition:0.3s;"></i>
@@ -155,17 +190,13 @@
 
                     <div id="upi-proof-section" style="display: none; margin-top: 15px; padding: 15px; border: 1px dashed #6528F7; border-radius: 8px; background: rgba(101, 40, 247, 0.05); text-align: center;">
                         <p style="font-size: 14px; font-weight: bold; color: #6528F7; margin-bottom: 10px;">Step 1: Pay ₹<span id="display-upi-total">0</span></p>
-                        <a id="pay-now-btn" href="#" target="_blank" style="display: inline-block; padding: 12px 20px; background: #6528F7; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; width: 100%; margin-bottom: 15px;">
-                            <i class="fas fa-qrcode"></i> Open UPI App to Pay
-                        </a>
-                        
+                        <a id="pay-now-btn" href="#" target="_blank" style="display: inline-block; padding: 12px 20px; background: #6528F7; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; width: 100%; margin-bottom: 15px;"><i class="fas fa-qrcode"></i> Open UPI App to Pay</a>
                         <p style="font-size: 14px; font-weight: bold; color: #d9534f; margin-bottom: 10px;">Step 2: Upload Screenshot</p>
                         <label for="upi-screenshot" id="upload-label" style="display: block; padding: 20px; border: 2px dashed #c5a880; border-radius: 8px; background: var(--card-bg); cursor: pointer; transition: 0.3s;">
                             <i class="fas fa-cloud-upload-alt" style="font-size: 24px; color: #c5a880; margin-bottom: 10px; display: block;"></i>
                             <span id="upload-text" style="color: #888; font-size: 13px; font-weight: bold;">Tap here to attach screenshot</span>
                         </label>
                         <input type="file" id="upi-screenshot" accept="image/*" style="display: none;" onchange="previewScreenshot(event)">
-                        
                         <img id="screenshot-preview" style="width: 100%; max-width: 200px; margin-top: 15px; border-radius: 8px; display: none; border: 2px solid #ddd; margin-left: auto; margin-right: auto;">
                     </div>
                 </div>
