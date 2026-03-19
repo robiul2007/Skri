@@ -16,24 +16,16 @@
     </style>
 </head>
 <body>
-
     <header>
         <div class="header-left"><div class="menu-icon" onclick="openSidebar()"><i class="fas fa-bars"></i></div><div class="brand-logo" onclick="navigate('home-view')">RS FASHION</div></div>
         <div class="header-right">
-            <i class="fas fa-moon" id="theme-toggle" onclick="toggleTheme()" style="margin-right: 10px; cursor: pointer;"></i> 
-            <i class="fas fa-search" onclick="toggleSearch()" style="cursor: pointer;"></i> 
-            <i class="far fa-user" onclick="handleUserClick()" style="cursor: pointer;"></i> 
-            <div class="cart-icon-wrap" onclick="navigate('cart-view')" style="cursor: pointer;">
-                <i class="fas fa-shopping-bag"></i><span class="cart-count" id="cart-counter">0</span>
-            </div>
+            <i class="fas fa-moon" id="theme-toggle" onclick="toggleTheme()" style="margin-right: 10px; cursor: pointer;"></i>
+            <i class="fas fa-search" onclick="toggleSearch()" style="cursor: pointer;"></i>
+            <i class="far fa-user" onclick="handleUserClick()" style="cursor: pointer;"></i>
+            <div class="cart-icon-wrap" onclick="navigate('cart-view')" style="cursor: pointer;"><i class="fas fa-shopping-bag"></i><span class="cart-count" id="cart-counter">0</span></div>
         </div>
     </header>
-
-    <div class="search-container" id="search-container">
-        <input type="text" class="search-input" id="search-input" placeholder="Search for products..." onkeyup="filterProducts()">
-        <div class="search-suggestions" id="search-suggestions"></div>
-    </div>
-
+    <div class="search-container" id="search-container"><input type="text" class="search-input" id="search-input" placeholder="Search for products..." onkeyup="filterProducts()"><div class="search-suggestions" id="search-suggestions"></div></div>
     <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header"><h3 style="font-family: 'Playfair Display'">Menu</h3><i class="fas fa-times" style="font-size: 20px; cursor: pointer;" onclick="closeSidebar()"></i></div>
@@ -43,24 +35,13 @@
             <a href="#" onclick="navigate('home-view'); closeSidebar();"><i class="fas fa-tshirt"></i> Products</a>
             <a href="#" onclick="navigate('cart-view'); closeSidebar();"><i class="fas fa-shopping-cart"></i> Cart</a>
             <a href="#" onclick="handleUserClick(); closeSidebar();"><i class="fas fa-user"></i> My Profile</a>
+            <a href="#" onclick="navigate('about-view'); closeSidebar();"><i class="fas fa-info-circle"></i> About Developer</a>
         </div>
         <div style="padding: 20px; text-align: center; font-size: 14px;"><p id="sidebar-user-display">Not Logged In</p></div>
     </div>
 
     <div id="home-view" class="view-section active-view">
-        <div class="slider-container">
-            <div class="slider-wrapper" id="sliderWrapper">
-                <div class="slide" style="background-image: url('slider1.jpg');"><div class="slide-content"><h1>Modest & Elegant</h1></div></div>
-                <div class="slide" style="background-image: url('slider2.jpg');"><div class="slide-content"><h1>Premium Quality</h1></div></div>
-            </div>
-        </div>
-        <h2 class="section-title">Shop by Category</h2>
-        <section class="categories">
-            <div class="category-item"><img src="cat1.jpg" class="category-img"><p class="category-name">Chiffon</p></div>
-            <div class="category-item"><img src="cat2.jpg" class="category-img"><p class="category-name">Cotton</p></div>
-            <div class="category-item"><img src="cat3.jpg" class="category-img"><p class="category-name">Abayas</p></div>
-            <div class="category-item"><img src="cat4.jpg" class="category-img"><p class="category-name">Undercaps</p></div>
-        </section>
+        <div class="slider-container"><div class="slider-wrapper" id="sliderWrapper"><div class="slide" style="background-image: url('slider1.jpg');"><div class="slide-content"><h1>Modest & Elegant</h1></div></div><div class="slide" style="background-image: url('slider2.jpg');"><div class="slide-content"><h1>Premium Quality</h1></div></div></div></div>
         <h2 class="section-title">Trending Now</h2><div class="products-grid" id="products-grid"></div>
     </div>
 
@@ -71,12 +52,11 @@
                 <p style="color: var(--text-gray); font-size: 13px; margin-bottom: 5px;" id="pd-id">Product ID: </p>
                 <h1 class="detail-title" id="pd-title">Product Name</h1>
                 <p class="detail-price" id="pd-price">₹0</p>
-                <ul class="features"><li><i class="fas fa-check-circle"></i> Premium Quality Fabric</li><li><i class="fas fa-check-circle"></i> Cash on Delivery (COD) Available</li><li><i class="fas fa-check-circle"></i> UPI Payments Accepted</li></ul>
+                <ul class="features" id="pd-features"></ul>
                 <div class="btn-group"><button class="btn-add" onclick="addToCartFromDetail()">Add to Cart</button><button class="btn-buy" onclick="openCheckoutModal('single')">Buy Now</button></div>
             </div>
         </div>
     </div>
-
     <div id="cart-view" class="view-section">
         <div class="cart-container"><h2 class="section-title">Your Cart</h2><div id="cart-items-container"></div><div class="cart-total" id="cart-total">Total: ₹0</div><button class="order-all-btn" onclick="openCheckoutModal('cart')"><i class="fas fa-shopping-cart"></i> Checkout All Items</button></div>
     </div>
@@ -94,46 +74,40 @@
             </div>
         </div>
     </div>
-    <div id="login-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeLogin()">&times;</span>
-            <h2 style="font-family: 'Playfair Display'; margin-bottom: 20px;">User Login</h2>
-            <input type="text" id="login-name" placeholder="Full Name" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;">
-            <input type="tel" id="login-number" placeholder="Mobile Number" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;">
-            <button onclick="processLogin()" style="width: 100%; padding: 12px; background: #1e1e2d; color: white; border: none; border-radius: 5px; font-weight: bold;">Login / Generate ID</button>
+
+    <div id="about-view" class="view-section">
+        <div class="about-container">
+            <h2 class="section-title">About Developer</h2>
+            <div class="dev-card" style="text-align: center; padding:20px; background:var(--card-bg); border-radius:10px; border:1px solid var(--border-color, #eee);">
+                <img src="robiul.png" alt="Robiul Islam" style="width:100px; height:100px; border-radius:50%; object-fit:cover; border:3px solid #c5a880;">
+                <h3 style="margin-top: 15px;">Hi, my name is Robiul Islam</h3>
+                <p style="color:var(--text-gray); margin-top:10px;">I made this elegant website to help businesses grow their online presence smoothly.</p>
+                <div style="text-align: left; margin-top:20px; background:rgba(0,0,0,0.03); padding:15px; border-radius:8px;">
+                    <p><strong><i class="fas fa-envelope" style="color:#c5a880;"></i> Email:</strong> robiulislam2867@gmail.com</p>
+                </div>
+            </div>
         </div>
+    </div>
+    <div id="login-modal" class="modal">
+        <div class="modal-content"><span class="close-modal" onclick="closeLogin()">&times;</span><h2 style="font-family: 'Playfair Display'; margin-bottom: 20px;">User Login</h2><input type="text" id="login-name" placeholder="Full Name" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;"><input type="tel" id="login-number" placeholder="Mobile Number" style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;"><button onclick="processLogin()" style="width: 100%; padding: 12px; background: #1e1e2d; color: white; border: none; border-radius: 5px; font-weight: bold;">Login / Generate ID</button></div>
     </div>
 
     <div id="checkout-modal" class="modal">
         <div class="modal-content" style="max-height: 90vh; overflow-y: auto;">
-            <span class="close-modal" onclick="closeCheckout()">&times;</span>
-            <h2 style="font-family: 'Playfair Display'; margin-bottom: 15px;">Complete Order</h2>
+            <span class="close-modal" onclick="closeCheckout()">&times;</span><h2 style="font-family: 'Playfair Display'; margin-bottom: 15px;">Complete Order</h2>
             <form id="checkout-form">
                 <p style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">Shipping Details</p>
                 <input type="text" id="chk-add1" placeholder="Address Line 1 (House, Street)" required style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px;">
                 <input type="text" id="chk-add2" placeholder="Area / Landmark" style="width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px;">
                 <input type="text" id="chk-pin" placeholder="Pincode" required style="width: 100%; padding: 12px; margin-bottom: 15px; border: 1px solid #ddd; border-radius: 5px;">
-                
-                <div style="background: rgba(197, 168, 128, 0.1); padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
-                    <p style="font-weight: bold; margin-bottom: 10px; font-size: 14px;"><i class="fas fa-wallet"></i> Payment Method:</p>
-                    
-                    <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer;">
-                        <input type="radio" name="payment_method" value="COD" checked onchange="document.getElementById('upi-proof-section').style.display='none'">
-                        <span>Cash on Delivery (COD)</span>
-                    </label>
-                    
-                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-                        <input type="radio" name="payment_method" value="UPI" onchange="document.getElementById('upi-proof-section').style.display='block'">
-                        <span>Pay Online (UPI)</span>
-                    </label>
-
-                    <div id="upi-proof-section" style="display: none; margin-top: 15px; padding: 15px; border: 1px dashed #6528F7; border-radius: 8px; background: rgba(101, 40, 247, 0.05); text-align: center;">
-                        <p style="font-size: 14px; font-weight: bold; color: #6528F7; margin-bottom: 10px;">Please pay ₹<span id="display-upi-total">0</span> to <b>YOUR_UPI_ID@okaxis</b></p>
-                        <p style="font-size: 12px; font-weight: bold; color: #d9534f; margin-bottom: 5px;"><i class="fas fa-camera"></i> Upload Payment Screenshot (Required)</p>
-                        <input type="file" id="upi-screenshot" accept="image/*" style="width: 100%; font-size: 12px;">
-                    </div>
+                <div style="margin-bottom: 15px; display: flex; gap: 10px;"><input type="text" id="chk-coupon" placeholder="Enter Coupon Code" style="flex:1; padding: 12px; border: 1px solid #ddd; border-radius: 5px;"><button type="button" onclick="applyCouponCode()" style="padding: 12px 20px; background: #c5a880; color: white; border: none; border-radius: 5px; font-weight: bold;">Apply</button></div>
+                <div id="checkout-summary" style="margin-bottom: 15px; font-size: 14px; font-weight: bold; text-align: right; background: rgba(0,0,0,0.02); padding:10px; border-radius:5px;">Subtotal: ₹<span id="chk-subtotal">0</span><br><span id="chk-discount-row" style="color: #1bc5bd; display: none;">Coupon Discount: -₹<span id="chk-discount">0</span><br></span>Total to Pay: ₹<span id="chk-final-total" style="color:#f64e60; font-size:16px;">0</span></div>
+                <div style="background: rgba(197, 168, 128, 0.1); padding: 15px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px; text-align: left;">
+                    <p style="font-weight: bold; margin-bottom: 10px; font-size: 14px;"><i class="fas fa-wallet"></i> Payment Method:</p><p id="upi-only-warning" style="display:none; color:#d9534f; font-size:12px; font-weight:bold; margin-bottom:10px;">⚠️ One or more items require Prepaid (UPI) payment.</p>
+                    <label id="cod-label" style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer;"><input type="radio" name="payment_method" value="COD" checked onchange="document.getElementById('upi-proof-section').style.display='none'"><span>Cash on Delivery (COD)</span></label>
+                    <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;"><input type="radio" name="payment_method" value="UPI" onchange="document.getElementById('upi-proof-section').style.display='block'"><span>Pay Online (UPI)</span></label>
+                    <div id="upi-proof-section" style="display: none; margin-top: 15px; padding: 15px; border: 1px dashed #6528F7; border-radius: 8px; background: rgba(101, 40, 247, 0.05); text-align: center;"><p style="font-size: 14px; font-weight: bold; color: #6528F7; margin-bottom: 10px;">Please pay ₹<span id="display-upi-total">0</span> to <b id="display-upi-id">...</b></p><p style="font-size: 12px; font-weight: bold; color: #d9534f; margin-bottom: 5px;"><i class="fas fa-camera"></i> Upload Payment Screenshot (Required)</p><input type="file" id="upi-screenshot" accept="image/*" style="width: 100%; font-size: 12px;"></div>
                 </div>
-
                 <button type="submit" id="order-now-btn" style="width: 100%; padding: 15px; background: #1e1e2d; color: white; border: none; border-radius: 8px; font-weight: bold; font-size: 16px;">Order Now</button>
             </form>
         </div>
@@ -142,6 +116,10 @@
     <footer>
         <h2 style="font-family: 'Playfair Display'; margin-bottom: 10px;">RS FASHION</h2>
         <p style="font-size: 14px; margin-bottom: 20px;">Premium modest wear shipped directly to you.</p>
+        <div class="footer-social-box" style="display:flex; flex-direction:column; gap:10px; align-items:center;">
+            <a href="https://youtube.com/@r.s_saru_vlog?si=G0fs6vu89ByI4r6C" target="_blank" style="padding:12px 20px; background:#ff0000; color:white; text-decoration:none; border-radius:5px; font-weight:bold; width:80%; max-width:300px;"><i class="fab fa-youtube"></i> Subscribe on YouTube</a>
+            <a href="https://www.instagram.com/rs__fashion____009?igsh=d3JtYnpoMmZ5a3Ri" target="_blank" style="padding:12px 20px; background:linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color:white; text-decoration:none; border-radius:5px; font-weight:bold; width:80%; max-width:300px;"><i class="fab fa-instagram"></i> Follow on Instagram</a>
+        </div>
         <p style="font-size: 12px; color: #aaa; margin-top: 20px;">© 2026 RS Fashion. Developed by Robiul Islam.</p>
     </footer>
 
