@@ -1,182 +1,123 @@
-// 1. CONNECT TO THE LIVE MOCKAPI DATABASE
-const API_URL = "https://69ba5f18b3dcf7e0b4bcb73f.mockapi.io/products";
+// YOUR LIVE FIREBASE DATABASE
+const DB_URL = "https://leon-41242-default-rtdb.firebaseio.com/";
 
-// Global State Variables
-let products = []; 
-let cart = [];
-let currentProduct = null;
-let currentUser = null;
-let checkoutMode = 'single'; 
-let orderMethod = 'instagram'; 
-let currentOrderTotal = 0; 
+let products = []; let cart = []; let currentUser = null; let currentProduct = null;
+let checkoutMode = 'single'; let currentOrderTotal = 0;
+const myUpiId = "YOUR_UPI_ID@okaxis"; // ADD YOUR REAL UPI ID
 
-// Store Info
-const sellerWhatsAppNumber = '919876543210'; 
-const instagramUsername = 'rs__fashion____009'; 
-const myUpiId = ''; 
+function showToast(msg, type = 'success') {
+    const existingToast = document.querySelector('.toast');
+    if(existingToast) existingToast.remove();
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.innerHTML = `<span>${msg}</span>`;
+    
+    toast.style.cssText = "position:fixed; bottom:30px; left:50%; transform:translateX(-50%) translateY(100px); padding:12px 25px; border-radius:30px; color:white; font-weight:bold; font-size:14px; display:flex; align-items:center; gap:10px; opacity:0; transition:0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); z-index:99999; box-shadow:0 5px 15px rgba(0,0,0,0.2);";
+    if(type === 'success') toast.style.background = '#1bc5bd';
+    else if(type === 'error') toast.style.background = '#f64e60';
+    else if(type === 'info') toast.style.background = '#3699ff';
 
-// Boot up the website
+    document.body.appendChild(toast);
+    setTimeout(() => { toast.style.transform = 'translateX(-50%) translateY(0)'; toast.style.opacity = '1'; }, 10);
+    setTimeout(() => { toast.style.transform = 'translateX(-50%) translateY(100px)'; toast.style.opacity = '0'; setTimeout(() => toast.remove(), 400); }, 3000);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
     restoreSession(); 
-    fetchProductsFromDatabase(); 
-    startAutoSlide();
+    fetchProductsFromDatabase();
 });
 
-// Fetch Live Inventory Data
 async function fetchProductsFromDatabase() {
     try {
-        const response = await fetch(API_URL);
-        const data = await response.json();
-        
-        products = data.map(item => ({
-            id: item.id,       
-            sku: `Rs${item.id}K`,      
-            name: item.name,
-            price: parseInt(item.price),
-            img: item.img,
-            stock: parseInt(item.stock) || 0,
-            status: item.status || 'Active'
-        }));
-
+        const res = await fetch(DB_URL + 'products.json');
+        const data = await res.json();
+        products = [];
+        if(data) { products = Object.keys(data).map(key => ({ id: key, ...data[key] })); }
         renderProducts(); 
-        
-    } catch (error) {
-        console.error("Error loading products", error);
-        const grid = document.getElementById('products-grid');
-        if(grid) grid.innerHTML = "<p style='text-align:center; width:100%; color:red;'>Failed to load products. Please check your internet connection.</p>";
-    }
+    } catch (e) { console.error("Network Error"); }
 }
 
-// Global UI Functions
-function showToast(msg) {
-    const toast = document.getElementById('toast');
-    if(!toast) return;
-    toast.innerHTML = `<i class="fas fa-info-circle"></i> ${msg}`;
-    toast.classList.add('show');
-    setTimeout(() => { toast.classList.remove('show'); }, 3000);
-}
-
-function toggleTheme() {
-    document.body.classList.toggle('dark-mode');
-    const themeIcon = document.getElementById('theme-toggle');
-    if(!themeIcon) return;
-    
-    if (document.body.classList.contains('dark-mode')) {
-        themeIcon.classList.remove('fa-moon');
-        themeIcon.classList.add('fa-sun');
-    } else {
-        themeIcon.classList.remove('fa-sun');
-        themeIcon.classList.add('fa-moon');
-    }
-}
-
-function shareProduct() {
-    if(!currentProduct) return;
-    const shareText = `Hey! Check out this beautiful ${currentProduct.name} at RS Fashion. Only ₹${currentProduct.price}!\n\nBrowse the collection here: https://rsfashion.vercel.app`;
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
-    window.open(whatsappUrl, '_blank');
-}
-// Image Slider Logic
-let slideIndex = 0;
-let slideInterval;
-function showSlide(index) {
-    const wrapper = document.getElementById('sliderWrapper');
-    if(!wrapper) return;
-    if (index > 3) slideIndex = 0; 
-    else if (index < 0) slideIndex = 3; 
-    else slideIndex = index;
-    wrapper.style.transform = `translateX(-${slideIndex * 100}%)`;
-}
-function nextSlide() { showSlide(slideIndex + 1); resetSlideTimer(); }
-function prevSlide() { showSlide(slideIndex - 1); resetSlideTimer(); }
-function startAutoSlide() { slideInterval = setInterval(() => { nextSlide(); }, 3500); }
-function resetSlideTimer() { clearInterval(slideInterval); startAutoSlide(); }
-
-function navigate(viewId) {
-    document.querySelectorAll('.view-section').forEach(view => view.classList.remove('active-view'));
-    const targetView = document.getElementById(viewId);
-    if(targetView) targetView.classList.add('active-view');
-    window.scrollTo(0, 0);
-    if(viewId === 'cart-view') renderCart();
-}
-
-// Render Products with Out of Stock Badges
 function renderProducts() {
     const homeGrid = document.getElementById('products-grid');
-    const allProductsGrid = document.getElementById('all-products-grid');
+    if(!homeGrid) return; homeGrid.innerHTML = '';
     
-    if(homeGrid) homeGrid.innerHTML = '';
-    if(allProductsGrid) allProductsGrid.innerHTML = '';
+    products.forEach((p, i) => {
+        let soldOut = p.status === 'Out of Stock' || p.stock <= 0;
+        let finalPrice = p.discount > 0 ? Math.round(p.price - (p.price * (p.discount/100))) : p.price;
+        let discountBadge = p.discount > 0 && !soldOut ? `<div style="position:absolute; top:10px; right:10px; background:#f64e60; color:white; padding:4px 8px; font-size:11px; font-weight:bold; border-radius:4px; z-index:2;">${p.discount}% OFF</div>` : '';
+        let soldOutBadge = soldOut ? `<div style="position:absolute; top:10px; left:10px; background:#1e1e2d; color:white; padding:4px 8px; font-size:11px; font-weight:bold; border-radius:4px; z-index:2;">Sold Out</div>` : '';
+        let priceHtml = p.discount > 0 ? `<span style="text-decoration:line-through; color:#888; font-size:11px; margin-right:5px;">₹${p.price}</span>₹${finalPrice}` : `₹${p.price}`;
+
+        let html = `
+            <div class="product-card" onclick="openProduct('${p.id}')" style="position:relative; ${soldOut ? 'opacity:0.6' : ''}">
+                ${soldOutBadge} ${discountBadge}
+                <div class="product-img-wrap"><img src="${p.img}" style="${soldOut ? 'filter:grayscale(1)' : ''}"></div>
+                <div class="product-info"><h3>${p.name}</h3><p>${priceHtml}</p></div>
+            </div>`;
+        if (i < 8) homeGrid.innerHTML += html;
+    });
+}
+
+function openProduct(id) {
+    currentProduct = products.find(p => p.id === id);
+    const pdImg = document.getElementById('pd-img');
+    pdImg.src = currentProduct.img;
     
-    if (products.length === 0) {
-        if(homeGrid) homeGrid.innerHTML = '<p style="text-align:center; width:100%;">Database is empty. Please check back later!</p>';
-        return;
+    let galleryContainer = document.getElementById('pd-gallery') || document.createElement('div');
+    galleryContainer.id = 'pd-gallery';
+    galleryContainer.style.cssText = "display:flex; gap:10px; margin-top:15px; overflow-x:auto; padding-bottom:5px;";
+    galleryContainer.innerHTML = '';
+
+    if(currentProduct.gallery && currentProduct.gallery.length > 1) {
+        currentProduct.gallery.forEach(imgUrl => {
+            galleryContainer.innerHTML += `<img src="${imgUrl}" style="width:65px; height:65px; object-fit:cover; border-radius:8px; cursor:pointer; border:1px solid #ddd;" onclick="document.getElementById('pd-img').src='${imgUrl}';">`;
+        });
     }
+    if(!document.getElementById('pd-gallery')) pdImg.parentNode.insertBefore(galleryContainer, pdImg.nextSibling);
 
-    products.forEach((p, index) => {
-        let isOutOfStock = p.status === 'Out of Stock' || p.stock <= 0;
-        
-        let badgeHtml = isOutOfStock 
-            ? `<div style="position: absolute; top: 10px; left: 10px; background: #f64e60; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Sold Out</div>` 
-            : '';
-
-        let cardStyle = isOutOfStock ? 'opacity: 0.7;' : '';
-        let imgStyle = isOutOfStock ? 'filter: grayscale(80%);' : '';
-
-        let cardHtml = `
-            <div class="product-card" onclick="openProduct('${p.id}')" style="position: relative; ${cardStyle}">
-                ${badgeHtml}
-                <div class="product-img-wrap"><img src="${p.img}" alt="${p.name}" style="${imgStyle}"></div>
-                <div class="product-info">
-                    <h3 class="p-title">${p.name}</h3>
-                    <p class="p-price">₹${p.price}</p>
-                </div>
-            </div>
-        `;
-        
-        if (index < 6 && homeGrid) homeGrid.innerHTML += cardHtml;
-        if (allProductsGrid) allProductsGrid.innerHTML += cardHtml;
-    });
-}
-
-function renderSuggestedProducts(excludeId) {
-    const suggestedGrid = document.getElementById('suggested-products-grid');
-    if (!suggestedGrid) return;
+    document.getElementById('pd-title').innerText = currentProduct.name;
+    let finalPrice = currentProduct.discount > 0 ? Math.round(currentProduct.price - (currentProduct.price * (currentProduct.discount/100))) : currentProduct.price;
+    currentProduct.finalPrice = finalPrice; 
     
-    suggestedGrid.innerHTML = '';
-    let availableProducts = products.filter(p => p.id !== excludeId);
-    availableProducts = availableProducts.sort(() => 0.5 - Math.random());
-    let suggestions = availableProducts.slice(0, 4);
+    let priceHtml = currentProduct.discount > 0 
+        ? `<span style="text-decoration:line-through; color:#888; font-size:14px; margin-right:8px;">₹${currentProduct.price}</span>₹${finalPrice} <span style="color:#f64e60; font-size:12px; font-weight:bold; margin-left:5px;">(${currentProduct.discount}% OFF)</span>` 
+        : `₹${currentProduct.price}`;
     
-    suggestions.forEach(p => {
-        let isOutOfStock = p.status === 'Out of Stock' || p.stock <= 0;
-        let cardStyle = isOutOfStock ? 'opacity: 0.7;' : '';
-        
-        suggestedGrid.innerHTML += `
-            <div class="product-card" onclick="openProduct('${p.id}')" style="position: relative; ${cardStyle}">
-                <div class="product-img-wrap"><img src="${p.img}" alt="${p.name}"></div>
-                <div class="product-info">
-                    <h3 class="p-title">${p.name}</h3>
-                    <p class="p-price">₹${p.price}</p>
-                </div>
-            </div>
-        `;
-    });
+    document.getElementById('pd-price').innerHTML = priceHtml;
+    
+    let isOutOfStock = currentProduct.status === 'Out of Stock' || currentProduct.stock <= 0;
+    let sd = document.getElementById('pd-stock-display') || document.createElement('div');
+    sd.id = 'pd-stock-display'; sd.style.marginTop = "10px";
+    
+    sd.innerHTML = isOutOfStock 
+        ? `<span style="background:#f64e60; color:white; padding:5px 10px; border-radius:4px; font-size:12px; font-weight:bold;">Out of Stock</span>`
+        : `<span style="background:#e8f8f5; color:#1bc5bd; padding:5px 10px; border-radius:4px; font-size:12px; font-weight:bold; border:1px solid #1bc5bd;">In Stock: ${currentProduct.stock} left</span>`;
+    
+    document.getElementById('pd-price').parentNode.insertBefore(sd, document.getElementById('pd-price').nextSibling);
+    navigate('product-view');
 }
-// UI Toggles
-function openSidebar() {
-    document.getElementById('sidebar').classList.add('open');
-    document.getElementById('sidebar-overlay').style.display = 'block';
+function navigate(viewId) {
+    document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active-view'));
+    const target = document.getElementById(viewId);
+    if(target) target.classList.add('active-view');
+    window.scrollTo(0, 0);
+    if(viewId === 'cart-view') renderCart();
+    if(viewId === 'profile-view') fetchMyOrders(); 
 }
-function closeSidebar() {
-    document.getElementById('sidebar').classList.remove('open');
-    document.getElementById('sidebar-overlay').style.display = 'none';
-}
-function toggleSearch() {
-    const searchBox = document.getElementById('search-container');
-    if(!searchBox) return;
-    searchBox.style.display = searchBox.style.display === 'block' ? 'none' : 'block';
-    document.getElementById('search-input').focus();
+
+function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('sidebar-overlay').style.display='block'; }
+function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('sidebar-overlay').style.display='none'; }
+function toggleSearch() { const s = document.getElementById('search-container'); s.style.display = s.style.display === 'block' ? 'none' : 'block'; document.getElementById('search-input').focus(); }
+
+function logSearchToFirebase(queryText) {
+    if(!currentUser || !currentUser.dbKey) return;
+    if(!currentUser.searches) currentUser.searches = [];
+    if(!currentUser.searches.includes(queryText)) {
+        currentUser.searches.push(queryText);
+        fetch(`${DB_URL}users/${currentUser.dbKey}.json`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ searches: currentUser.searches }) });
+        localStorage.setItem('rsFashionUser', JSON.stringify(currentUser));
+    }
 }
 
 function filterProducts() {
@@ -184,309 +125,229 @@ function filterProducts() {
     const suggestionsBox = document.getElementById('search-suggestions');
     if(query.length === 0) { suggestionsBox.style.display = 'none'; return; }
     
-    const filtered = products.filter(p => p.name.toLowerCase().includes(query) || p.sku.toLowerCase().includes(query));
+    const filtered = products.filter(p => p.name.toLowerCase().includes(query));
     suggestionsBox.innerHTML = '';
     
     if(filtered.length > 0) {
         filtered.forEach(p => {
             suggestionsBox.innerHTML += `
-                <div class="suggestion-item" onclick="openProduct('${p.id}'); document.getElementById('search-container').style.display='none';">
+                <div class="suggestion-item" onclick="logSearchToFirebase('${p.name}'); openProduct('${p.id}'); document.getElementById('search-container').style.display='none';">
                     <img src="${p.img}" style="width: 50px; height: 50px; border-radius: 5px; object-fit: cover;">
-                    <div><div style="font-weight: 500;">${p.name}</div><div style="color: var(--accent-color); font-size: 12px;">ID: ${p.sku} | ₹${p.price}</div></div>
-                </div>
-            `;
+                    <div><div style="font-weight: 500;">${p.name}</div><div style="color: var(--primary-color); font-size: 12px;">₹${p.price}</div></div>
+                </div>`;
         });
         suggestionsBox.style.display = 'block';
-    } else {
-        suggestionsBox.innerHTML = '<div class="suggestion-item">No products found</div>';
-        suggestionsBox.style.display = 'block';
     }
 }
 
-// Dynamic Product View Construction
-function openProduct(id) {
-    currentProduct = products.find(p => p.id === id);
-    if(!currentProduct) return;
-    
-    document.getElementById('pd-img').src = currentProduct.img;
-    document.getElementById('pd-img-thumb1').src = currentProduct.img;
-    document.getElementById('pd-img-thumb2').src = currentProduct.img; 
-    document.getElementById('pd-img-thumb3').src = currentProduct.img; 
-
-    document.getElementById('pd-id').innerText = `Product ID: ${currentProduct.sku}`;
-    document.getElementById('pd-title').innerText = currentProduct.name;
-    document.getElementById('pd-price').innerText = `₹${currentProduct.price}`;
-    
-    // Check Stock and Render Dynamic Badge
-    let isOutOfStock = currentProduct.status === 'Out of Stock' || currentProduct.stock <= 0;
-    let stockDisplay = document.getElementById('pd-stock-display');
-    
-    // Create the stock element dynamically if it doesn't exist
-    if(!stockDisplay) {
-        stockDisplay = document.createElement('div');
-        stockDisplay.id = 'pd-stock-display';
-        stockDisplay.style.marginTop = "12px";
-        const priceElement = document.getElementById('pd-price');
-        priceElement.parentNode.insertBefore(stockDisplay, priceElement.nextSibling);
-    }
-
-    if(isOutOfStock) {
-        stockDisplay.innerHTML = `<span style="background: #f64e60; color: white; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 13px; display: inline-block;"><i class="fas fa-times-circle"></i> Out of Stock</span>`;
-    } else {
-        stockDisplay.innerHTML = `<span style="background: rgba(27, 197, 189, 0.1); color: #1bc5bd; padding: 6px 12px; border-radius: 4px; font-weight: bold; font-size: 13px; display: inline-block; border: 1px solid #1bc5bd;"><i class="fas fa-check-circle"></i> In Stock: ${currentProduct.stock} units available</span>`;
-    }
-
-    renderSuggestedProducts(id);
-    navigate('product-view');
+function showBanModal() {
+    const modal = document.createElement('div');
+    modal.style.position = 'fixed'; modal.style.top = '0'; modal.style.left = '0'; modal.style.width = '100%'; modal.style.height = '100%';
+    modal.style.backgroundColor = 'rgba(0, 0, 0, 0.8)'; modal.style.display = 'flex'; modal.style.alignItems = 'center'; modal.style.justifyContent = 'center'; modal.style.zIndex = '99999';
+    modal.innerHTML = `
+        <div style="background: white; padding: 35px 25px; border-radius: 12px; width: 90%; max-width: 380px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.3);">
+            <div style="width: 70px; height: 70px; background: rgba(246, 78, 96, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;"><i class="fas fa-user-slash" style="font-size: 30px; color: #f64e60;"></i></div>
+            <h2 style="font-family: 'Playfair Display', serif; color: #1e1e2d; margin-bottom: 10px; font-size: 24px;">Account Suspended</h2>
+            <p style="color: #666; font-size: 14px; margin-bottom: 25px; line-height: 1.6;">Your access has been restricted by the administrator.</p>
+            <a href="mailto:robiulislam786786u@gmail.com" style="display: block; width: 100%; padding: 14px; background: #1e1e2d; color: white; text-decoration: none; border-radius: 8px; font-weight: bold; margin-bottom: 12px;"><i class="fas fa-envelope" style="margin-right: 8px;"></i> Contact Support</a>
+            <button onclick="this.parentElement.parentElement.remove()" style="width: 100%; padding: 14px; background: transparent; color: #888; border: 1px solid #ddd; border-radius: 8px; font-weight: bold; cursor: pointer;">Close</button>
+        </div>`;
+    document.body.appendChild(modal);
 }
 
-function changeMainImg(src) { document.getElementById('pd-img').src = src; }
+async function processLogin() {
+    const name = document.getElementById('login-name').value;
+    const phone = document.getElementById('login-number').value;
+    if(!name || !phone) return showToast("⚠️ Please enter Name & Number", "error");
 
-// Cart & Checkout Permissions
+    try {
+        const res = await fetch(DB_URL + 'users.json'); const data = await res.json();
+        let existingUser = null; let existingKey = null;
+        if(data) { for(let key in data) { if(data[key].phone === phone) { existingUser = data[key]; existingKey = key; break; } } }
+
+        if(existingUser && existingUser.banned === true) { document.getElementById('login-modal').style.display='none'; showBanModal(); return; }
+
+        if(existingUser) {
+            currentUser = existingUser; currentUser.dbKey = existingKey;
+        } else {
+            const uniqueId = `RS${Math.floor(10000 + Math.random() * 90000)}`;
+            currentUser = { name: name, phone: phone, userId: uniqueId, banned: false, searches: [], cart: [] };
+            const postRes = await fetch(DB_URL + 'users.json', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(currentUser) });
+            const postData = await postRes.json(); currentUser.dbKey = postData.name; 
+        }
+
+        if(currentUser.cart && currentUser.cart.length > 0 && cart.length === 0) {
+            cart = currentUser.cart; localStorage.setItem('rsFashionCart', JSON.stringify(cart)); document.getElementById('cart-counter').innerText = cart.length;
+        }
+
+        localStorage.setItem('rsFashionUser', JSON.stringify(currentUser));
+        updateProfileUI(); document.getElementById('login-modal').style.display='none'; navigate('profile-view'); 
+        showToast("✅ Logged in successfully!", "success");
+    } catch (error) { showToast("⚠️ Network Error connecting to server.", "error"); }
+}
+
+function logoutUser() { currentUser = null; localStorage.removeItem('rsFashionUser'); window.location.reload(); }
+
+function updateProfileUI() {
+    if(currentUser) {
+        const sidebarDisplay = document.getElementById('sidebar-user-display');
+        if(sidebarDisplay) sidebarDisplay.innerHTML = `<b>${currentUser.name}</b><br>ID: ${currentUser.userId}`;
+        if(document.getElementById('prof-name')) document.getElementById('prof-name').innerText = currentUser.name;
+        if(document.getElementById('prof-phone')) document.getElementById('prof-phone').innerText = currentUser.phone;
+        if(document.getElementById('prof-id')) document.getElementById('prof-id').innerText = currentUser.userId;
+    }
+}
+
+async function restoreSession() {
+    const savedCart = localStorage.getItem('rsFashionCart');
+    if(savedCart) { cart = JSON.parse(savedCart); if(document.getElementById('cart-counter')) document.getElementById('cart-counter').innerText = cart.length; }
+
+    const u = localStorage.getItem('rsFashionUser');
+    if(u) { 
+        currentUser = JSON.parse(u); updateProfileUI(); 
+        try {
+            const res = await fetch(DB_URL + 'users.json'); const data = await res.json();
+            if(data) {
+                for(let key in data) {
+                    if(data[key].phone === currentUser.phone) {
+                        if(data[key].banned === true) { logoutUser(); showBanModal(); return; }
+                        currentUser.dbKey = key; 
+                    }
+                }
+            }
+        } catch(e) {}
+    }
+}
+
+function handleUserClick() { if(currentUser) navigate('profile-view'); else document.getElementById('login-modal').style.display='flex'; }
+function openLogin() { document.getElementById('login-modal').style.display = 'flex'; }
+function closeLogin() { document.getElementById('login-modal').style.display = 'none'; }
+function syncCartToFirebase() {
+    if(currentUser && currentUser.dbKey) {
+        fetch(`${DB_URL}users/${currentUser.dbKey}.json`, { method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ cart: cart }) });
+        currentUser.cart = cart; localStorage.setItem('rsFashionUser', JSON.stringify(currentUser));
+    }
+}
+
 function addToCartFromDetail() {
     if(!currentProduct) return;
-    if(currentProduct.status === 'Out of Stock' || currentProduct.stock <= 0) {
-        showToast("Sorry, this item is currently out of stock!");
-        return;
-    }
+    if(currentProduct.status === 'Out of Stock' || currentProduct.stock <= 0) return showToast("⚠️ Sorry, this item is Sold Out!", "error");
     
-    cart.push(currentProduct);
-    saveCart(); 
+    let cartItem = { ...currentProduct, price: currentProduct.finalPrice || currentProduct.price };
+    cart.push(cartItem);
+    
     document.getElementById('cart-counter').innerText = cart.length;
-    showToast(`${currentProduct.name} added to cart!`);
+    localStorage.setItem('rsFashionCart', JSON.stringify(cart)); 
+    syncCartToFirebase(); 
+    showToast("🛍️ Item added to cart!", "success");
 }
 
 function renderCart() {
     const container = document.getElementById('cart-items-container');
-    if(!container) return;
-    container.innerHTML = '';
-    let total = 0;
-    if(cart.length === 0) {
-        container.innerHTML = '<p style="text-align:center; padding: 20px;">Your cart is empty.</p>';
-    } else {
-        cart.forEach((item, index) => {
-            total += item.price;
-            container.innerHTML += `
-                <div class="cart-item">
-                    <img src="${item.img}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 5px;">
-                    <div style="flex-grow: 1;"><p style="font-size: 11px; color: var(--text-gray);">ID: ${item.sku}</p><h4>${item.name}</h4><p style="color: var(--accent-color); font-weight: bold;">₹${item.price}</p></div>
-                    <i class="fas fa-trash" style="color: red; cursor: pointer; padding: 10px;" onclick="removeFromCart(${index})"></i>
-                </div>
-            `;
-        });
-    }
+    container.innerHTML = ''; let total = 0;
+    cart.forEach((item, index) => {
+        total += item.price;
+        container.innerHTML += `<div class="cart-item" style="display:flex; align-items:center; gap:15px; margin-bottom:15px;"><img src="${item.img}" style="width:50px; border-radius:5px;"><div><h4>${item.name}</h4><p style="font-weight:bold; color:var(--primary-color);">₹${item.price}</p></div><i class="fas fa-trash" style="color:#f64e60; margin-left:auto; cursor:pointer;" onclick="removeFromCart(${index})"></i></div>`;
+    });
     document.getElementById('cart-total').innerText = `Total: ₹${total}`;
 }
 
-function removeFromCart(index) {
-    cart.splice(index, 1);
-    saveCart(); 
-    document.getElementById('cart-counter').innerText = cart.length;
-    renderCart();
-}
-
-function saveCart() { localStorage.setItem('rsFashionCart', JSON.stringify(cart)); }
-// User Auth Logic
-function handleUserClick() {
-    if(currentUser) navigate('profile-view');
-    else openLogin();
-}
-
-function openLogin() { document.getElementById('login-modal').style.display = 'flex'; }
-function closeLogin() { document.getElementById('login-modal').style.display = 'none'; }
-
-function processLogin() {
-    const name = document.getElementById('login-name').value;
-    const phone = document.getElementById('login-number').value;
-    if(name && phone) {
-        const uniqueId = `Rs${Math.floor(1000 + Math.random() * 9000)}R`;
-        currentUser = { name, phone, id: uniqueId };
-        
-        localStorage.setItem('rsFashionUser', JSON.stringify(currentUser));
-        updateProfileUI();
-        closeLogin();
-        navigate('profile-view');
-        showToast("Successfully logged in!");
-    } else { showToast("Please enter both Name and Number."); }
-}
-
-function logoutUser() {
-    currentUser = null;
-    localStorage.removeItem('rsFashionUser');
-    updateProfileUI();
-    document.getElementById('login-name').value = '';
-    document.getElementById('login-number').value = '';
-    navigate('home-view');
-    showToast("Logged out successfully.");
-}
-
-function updateProfileUI() {
-    if(currentUser) {
-        document.getElementById('sidebar-user-display').innerHTML = `Logged in as: <b>${currentUser.name}</b><br>ID: <span style="color: var(--accent-color)">${currentUser.id}</span>`;
-        if(document.getElementById('prof-name')) document.getElementById('prof-name').innerText = currentUser.name;
-        if(document.getElementById('prof-phone')) document.getElementById('prof-phone').innerText = currentUser.phone;
-        if(document.getElementById('prof-id')) document.getElementById('prof-id').innerText = currentUser.id;
-    } else {
-        document.getElementById('sidebar-user-display').innerText = "Not Logged In";
-        if(document.getElementById('prof-name')) document.getElementById('prof-name').innerText = "Name";
-        if(document.getElementById('prof-phone')) document.getElementById('prof-phone').innerText = "...";
-        if(document.getElementById('prof-id')) document.getElementById('prof-id').innerText = "...";
-    }
-}
-
-function restoreSession() {
-    const savedUser = localStorage.getItem('rsFashionUser');
-    if(savedUser) {
-        currentUser = JSON.parse(savedUser);
-        updateProfileUI();
-    }
-    const savedCart = localStorage.getItem('rsFashionCart');
-    if(savedCart) {
-        cart = JSON.parse(savedCart);
-        if(document.getElementById('cart-counter')) document.getElementById('cart-counter').innerText = cart.length;
-    }
-}
-
-// Checkout & Instagram Logic
-function toggleUPI(show) {
-    const upiSection = document.getElementById('upi-section');
-    if(upiSection) upiSection.style.display = show ? 'block' : 'none';
+function removeFromCart(index) { 
+    cart.splice(index, 1); 
+    localStorage.setItem('rsFashionCart', JSON.stringify(cart)); 
+    renderCart(); 
+    document.getElementById('cart-counter').innerText = cart.length; 
+    syncCartToFirebase(); 
+    showToast("🗑️ Item removed", "info");
 }
 
 function openCheckoutModal(mode) {
-    if (!currentUser) {
-        showToast("Please login first to place an order!");
-        openLogin(); 
-        return; 
-    }
-
-    // Out of stock verification check before opening checkout
-    if (mode === 'single' && currentProduct) {
-        if(currentProduct.status === 'Out of Stock' || currentProduct.stock <= 0) {
-            showToast("Sorry, this item is currently out of stock!");
-            return;
-        }
-    }
-
+    if (!currentUser) return showToast("⚠️ Please Login First to Checkout!", "error");
     checkoutMode = mode;
-    currentOrderTotal = 0;
-
-    if (mode === 'single') {
-        currentOrderTotal = currentProduct.price;
-        document.getElementById('checkout-product-name').innerText = `1 Item - ₹${currentOrderTotal}`;
-    } else {
-        if(cart.length === 0) { showToast("Your cart is empty!"); return; }
-        currentOrderTotal = cart.reduce((sum, item) => sum + item.price, 0);
-        document.getElementById('checkout-product-name').innerText = `Cart Total (${cart.length} items) - ₹${currentOrderTotal}`;
-    }
-    
-    document.getElementById('chk-name').value = currentUser.name;
-    document.getElementById('chk-phone').value = currentUser.phone;
-    document.getElementById('upi-amount').innerText = currentOrderTotal;
-    
-    if (myUpiId === '') {
-        document.getElementById('upi-link').href = "#";
-        document.getElementById('upi-link').onclick = (e) => { 
-            e.preventDefault(); 
-            alert("Payment system is ready! Please provide your UPI ID to activate this button."); 
-        };
-    } else {
-        const upiLink = `upi://pay?pa=${myUpiId}&pn=RS Fashion&am=${currentOrderTotal}&cu=INR&tn=Order Payment`;
-        document.getElementById('upi-link').href = upiLink;
-        document.getElementById('upi-link').onclick = null;
-    }
-
-    document.querySelector('input[value="Cash on Delivery (COD)"]').checked = true;
-    toggleUPI(false);
+    currentOrderTotal = mode === 'single' ? (currentProduct.finalPrice || currentProduct.price) : cart.reduce((s, i) => s + i.price, 0);
     document.getElementById('checkout-modal').style.display = 'flex';
 }
 
 function closeCheckout() { document.getElementById('checkout-modal').style.display = 'none'; }
 
-function showInstagramInstructionModal() {
-    const modal = document.createElement('div');
-    modal.className = 'modal';
-    modal.style.display = 'flex';
-    modal.style.zIndex = '9999'; 
-    
-    modal.innerHTML = `
-        <div class="modal-content" style="text-align: center; padding: 30px 20px;">
-            <div style="width: 60px; height: 60px; background: var(--light-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1);">
-                <i class="fab fa-instagram" style="font-size: 35px; color: #E1306C;"></i>
-            </div>
-            <h2 style="font-family: 'Playfair Display'; margin-bottom: 10px; color: var(--text-main);">One Last Step!</h2>
-            
-            <div style="background: var(--light-bg); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; text-align: left; margin-bottom: 20px;">
-                <p style="font-size: 14px; color: var(--text-main); margin-bottom: 8px;">✅ <b>Order details copied automatically!</b></p>
-                <p style="font-size: 13px; color: var(--text-gray); margin-bottom: 5px;">1. Click the button below to open Instagram.</p>
-                <p style="font-size: 13px; color: var(--text-gray); margin-bottom: 5px;">2. Go to RS Fashion's chat.</p>
-                <p style="font-size: 13px; color: var(--text-gray);">3. <b>Paste</b> the message and send to confirm!</p>
-            </div>
+document.getElementById('checkout-form').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = document.getElementById('order-now-btn');
+    if(btn) { btn.innerHTML = "<i class='fas fa-spinner fa-spin'></i> Processing..."; btn.disabled = true; }
 
-            <button onclick="window.open('https://ig.me/m/${instagramUsername}', '_blank'); this.parentElement.parentElement.remove();" style="width: 100%; padding: 14px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); color: white; border: none; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(225, 48, 108, 0.3);">
-                Open Instagram
-            </button>
-            <p onclick="this.parentElement.parentElement.remove()" style="margin-top: 15px; color: var(--text-gray); cursor: pointer; text-decoration: underline; font-size: 13px;">Cancel</p>
-        </div>
-    `;
-    document.body.appendChild(modal);
+    let selectedPayment = "COD"; 
+    const paymentRadios = document.getElementsByName('payment_method');
+    for(let radio of paymentRadios) { if(radio.checked) { selectedPayment = radio.value; break; } }
+
+    const addressData = document.getElementById('chk-add1').value + ", " + document.getElementById('chk-add2').value + " - Pincode: " + document.getElementById('chk-pin').value;
+
+    const orderData = {
+        userId: currentUser.userId, customerName: currentUser.name, phone: currentUser.phone,
+        address: addressData,
+        items: checkoutMode === 'single' ? currentProduct.name : cart.map(i => i.name).join(", "),
+        totalAmount: currentOrderTotal, 
+        status: "Pending", 
+        deliveryTime: "Awaiting Admin Confirmation",
+        paymentType: selectedPayment 
+    };
+
+    try {
+        const res = await fetch(DB_URL + 'orders.json', { method: 'POST', body: JSON.stringify(orderData) });
+        const savedOrder = await res.json();
+        
+        closeCheckout();
+        if(checkoutMode === 'cart') { cart = []; localStorage.setItem('rsFashionCart', JSON.stringify(cart)); syncCartToFirebase(); document.getElementById('cart-counter').innerText = 0; }
+        
+        if(selectedPayment === 'UPI') {
+            const upiLink = `upi://pay?pa=${myUpiId}&pn=RS Fashion&am=${currentOrderTotal}&cu=INR&tn=Order_${savedOrder.name}`;
+            showToast("🎉 Order Placed! Opening UPI App...", "success");
+            setTimeout(() => { window.location.href = upiLink; navigate('profile-view'); }, 1500);
+        } else {
+            showToast("🎉 COD Order Placed Successfully!", "success");
+            setTimeout(() => { navigate('profile-view'); }, 1500);
+        }
+        
+    } catch (err) { showToast("❌ Failed to place order. Check your connection.", "error"); }
+    
+    if(btn) { btn.innerText = "Order Now"; btn.disabled = false; }
+});
+
+async function fetchMyOrders() {
+    const container = document.getElementById('order-history-list');
+    if(!container || !currentUser) return;
+    container.innerHTML = '<p style="text-align:center; color:var(--primary-color);"><i class="fas fa-spinner fa-spin"></i> Checking live status...</p>';
+    
+    try {
+        const res = await fetch(DB_URL + 'orders.json'); const data = await res.json(); container.innerHTML = '';
+        let hasOrders = false;
+        if(data) {
+            Object.keys(data).reverse().forEach(key => {
+                let o = data[key];
+                if(o.userId === currentUser.userId) {
+                    hasOrders = true;
+                    let color = o.status === 'Pending' ? '#ffa800' : (o.status === 'Rejected' ? '#f64e60' : '#1bc5bd');
+                    let payBadge = o.paymentType === 'COD' ? '<span style="background:#333; color:white; padding:2px 6px; border-radius:4px; font-size:9px; margin-left:5px;">COD</span>' : '';
+                    
+                    container.innerHTML += `
+                        <div style="background:#fff; padding:15px; border-radius:8px; margin-bottom:15px; border-left:4px solid ${color}; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                <b>${o.items}</b><span style="background:${color}; color:white; padding:4px 10px; border-radius:4px; font-size:11px; font-weight:bold;">${o.status}</span>
+                            </div>
+                            <p style="font-size:13px; margin-top:10px; font-weight:bold; color:#333;">🚚 ${o.deliveryTime}</p>
+                            <p style="font-size:12px; color:#888; margin-top:5px;">Amount: ₹${o.totalAmount} ${payBadge}</p>
+                        </div>`;
+                }
+            });
+        }
+        if(!hasOrders) container.innerHTML = '<p style="text-align:center; color:#888;">No orders found yet.</p>';
+    } catch (e) { container.innerHTML = '<p style="color:red;">Error syncing tracking data.</p>'; }
 }
 
-document.getElementById('checkout-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const name = document.getElementById('chk-name').value;
-    const phone = document.getElementById('chk-phone').value;
-    const address = `${document.getElementById('chk-add1').value}, ${document.getElementById('chk-add2').value}`;
-    const pin = document.getElementById('chk-pin').value;
-    const selectedPayMode = document.querySelector('input[name="pay_mode"]:checked').value;
-
-    let msg = `*New Order Request!*\n\n`;
-    msg += `*User ID:* ${currentUser.id}\n`;
-    msg += `*Registered Name:* ${currentUser.name}\n\n`;
-    msg += `*Items Ordered:*\n`;
-    
-    let finalTotal = 0;
-
-    if(checkoutMode === 'single') {
-        msg += `1. ${currentProduct.name} (ID: ${currentProduct.sku}) - ₹${currentProduct.price}\n`;
-        finalTotal = currentProduct.price;
-    } else {
-        cart.forEach((item, i) => {
-            msg += `${i+1}. ${item.name} (ID: ${item.sku}) - ₹${item.price}\n`;
-            finalTotal += item.price;
-        });
+// Simple slider functions just to prevent errors if html calls them
+function prevSlide() {}
+function nextSlide() {}
+function shareProduct() {
+    if(navigator.share) {
+        navigator.share({ title: currentProduct.name, text: 'Check out this premium modest wear at RS Fashion!', url: window.location.href });
     }
-
-    msg += `\n*Total Amount:* ₹${finalTotal}\n`;
-    msg += `*Payment Mode:* ${selectedPayMode}\n\n`; 
-    msg += `*Delivery Details:*\nName: ${name}\nMobile: ${phone}\nAddress: ${address}\nPincode: ${pin}\n\n`;
-    msg += `*Order from the website*`;
-
-    if (orderMethod === 'whatsapp') {
-        showToast("WhatsApp ordering is coming soon! Please use Instagram to place your order.");
-        return; 
-    } else if (orderMethod === 'instagram') {
-        const tempTextArea = document.createElement("textarea");
-        tempTextArea.value = msg;
-        document.body.appendChild(tempTextArea);
-        tempTextArea.select();
-        tempTextArea.setSelectionRange(0, 99999); 
-        
-        try {
-            document.execCommand("copy");
-            closeCheckout();
-            showInstagramInstructionModal();
-            
-            if(checkoutMode === 'cart') {
-                cart = []; 
-                saveCart(); 
-                document.getElementById('cart-counter').innerText = 0;
-            }
-            document.getElementById('checkout-form').reset();
-            
-        } catch (err) {
-            showToast("Copy failed on this browser. Please try again.");
-        }
-        document.body.removeChild(tempTextArea);
-    }
-});
+}
